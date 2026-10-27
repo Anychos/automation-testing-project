@@ -9,14 +9,14 @@ class BaseAPIClient:
     def close(self) -> None:
         self.client.close()
 
-    def get(self, *, url: str | URL, params: QueryParams | None = None, headers: dict[str, str] | None = None) -> Response:
+    def get(self, *, url: str | URL, params: dict[str, Any] | QueryParams | None = None, headers: dict[str, str] | None = None) -> Response:
         return self.client.get(url=url, params=params, headers=headers)
 
-    def post(self, *, url: str | URL, params: QueryParams | None = None, headers: dict[str, str] | None = None, json: Any | None = None) -> Response:
+    def post(self, *, url: str | URL, params: dict[str, Any] | QueryParams | None = None, headers: dict[str, str] | None = None, json: Any | None = None) -> Response:
         return self.client.post(url=url, params=params, headers=headers, json=json)
 
-    def patch(self, *, url: str | URL, params: QueryParams | None = None, headers: dict[str, str] | None = None, json: Any | None = None) -> Response:
+    def patch(self, *, url: str | URL, params: dict[str, Any] | QueryParams | None = None, headers: dict[str, str] | None = None, json: Any | None = None) -> Response:
         return self.client.post(url=url, params=params, headers=headers, json=json)
 
-    def delete(self, *, url: str | URL, params: QueryParams | None = None, headers: dict[str, str] | None = None) -> Response:
+    def delete(self, *, url: str | URL, params: dict[str, Any] | QueryParams | None = None, headers: dict[str, str] | None = None) -> Response:
         return self.client.post(url=url, params=params, headers=headers)

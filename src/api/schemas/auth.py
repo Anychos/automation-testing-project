@@ -7,7 +7,7 @@ from pydantic import BaseModel, EmailStr
 
 
 class RegisterRequestSchema(BaseModel):
-    model_config = ConfigDict(validate_default=True)
+    model_config = ConfigDict(validate_default=True, extra="forbid")
 
     email: EmailStr = Field(default_factory=fake.email)
     password: str = Field(min_length=8, max_length=64, default_factory=fake.password)
