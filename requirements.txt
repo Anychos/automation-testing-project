@@ -1,0 +1,5 @@
+Faker
+email-validator
+httpx
+pydantic
+pytest
