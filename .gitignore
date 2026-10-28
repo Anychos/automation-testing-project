@@ -5,6 +5,7 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
+swagger-cache
 
 # Virtual environments
 .venv/
@@ -24,3 +25,11 @@ allure-report/
 .vscode/
 .DS_Store
 Thumbs.db
+
+PROJECT_REVIEW_JUNIOR_AQA_2026-10-28.md
+
+# AI agents instructions
+.cline
+.continue
+.opencode
+AGENTS.md

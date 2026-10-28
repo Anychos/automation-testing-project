@@ -36,11 +36,50 @@
 
 ## Технологии
 
-- Python;
+- Python 3.14 (проверенная версия);
 - pytest;
 - httpx;
 - Pydantic;
 - Faker.
+
+## Первый запуск
+
+Проект проверялся на Windows с Python 3.14. Для изолированной установки:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+`pydantic-settings` нужен для загрузки настроек из `config.py`. `tzdata`
+поставляется явно: на Windows он предоставляет IANA-данные для
+`ZoneInfo("Europe/Moscow")`, используемого генератором тестовых данных.
+
+Создайте локальный `.env` на основе `.env.example` и укажите адрес доступного
+BookingLab API в `CLIENT_SETTINGS.BASE_URL`. В репозитории нет самого
+тестируемого приложения и готовых учётных записей: их источник, запуск и
+данные определяет владелец API.
+
+Проверки стиля используют системные команды `ruff` и `pre-commit`, поэтому
+установите их в активное окружение и зарегистрируйте hooks:
+
+```powershell
+python -m pip install ruff pre-commit
+pre-commit install
+ruff check --no-cache --select E4,E7,E9,F,I .
+ruff format --no-cache --check .
+```
+
+После настройки окружения коллекцию тестов можно проверить командой:
+
+```powershell
+pytest --collect-only -q
+```
+
+На текущем этапе модули в `tests/api` подготовлены, но сценарии в них ещё не
+реализованы; поэтому пустая коллекция не является успешным прогоном тестов.
 
 ## Планы развития
 

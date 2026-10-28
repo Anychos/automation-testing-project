@@ -1,15 +1,14 @@
-from src.api.clients.health import get_health_client
 from collections.abc import Iterator
+
 import pytest
 
-from api.clients.health import HealthAPIClient
+from src.api.clients.health import HealthAPIClient, get_health_client
 
 
 @pytest.fixture
 def health_client() -> Iterator[HealthAPIClient]:
+    health_client = get_health_client()
 
-    users_client = get_health_client()
+    yield health_client
 
-    yield users_client
-
-    users_client.close()
+    health_client.close()

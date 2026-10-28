@@ -1,12 +1,13 @@
-from uuid import UUID
-from src.api.clients.auth import AuthAPIClient
-from pydantic import BaseModel
-from api.schemas.rooms import CreateRoomRequestSchema, CreateRoomResponseSchema
-from src.api.clients.rooms import get_rooms_client
 from collections.abc import Iterator
-import pytest
+from uuid import UUID
 
-from api.clients.rooms import RoomsAPIClient
+import pytest
+from pydantic import BaseModel
+
+from src.api.clients.auth import AuthAPIClient
+from src.api.clients.rooms import RoomsAPIClient, get_rooms_client
+from src.api.fixtures.auth import AdminFixture
+from src.api.schemas.rooms import CreateRoomRequestSchema, CreateRoomResponseSchema
 
 
 class RoomFixture(BaseModel):
@@ -19,13 +20,18 @@ class RoomFixture(BaseModel):
 
 
 @pytest.fixture
-def rooms_client() -> Iterator[RoomsAPIClient]:
+def rooms_client(
+    auth_client: AuthAPIClient, admin: AdminFixture
+) -> Iterator[RoomsAPIClient]:
+    rooms_client = get_rooms_client(
+        auth_client=auth_client,
+        login_data=admin.request,
+    )
 
-    users_client = get_rooms_client()
-
-    yield users_client
-
-    users_client.close()
+    try:
+        yield rooms_client
+    finally:
+        rooms_client.close()
 
 
 @pytest.fixture(scope="function")

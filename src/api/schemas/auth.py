@@ -1,9 +1,10 @@
-from src.api.tools.data_generator import fake
-from typing import Literal
 from datetime import datetime
+from typing import Literal
 from uuid import UUID
-from pydantic import ConfigDict, Field
-from pydantic import BaseModel, EmailStr
+
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
+
+from src.api.tools.data_generator import fake
 
 
 class RegisterRequestSchema(BaseModel):
@@ -14,8 +15,10 @@ class RegisterRequestSchema(BaseModel):
 
 
 class LoginRequestSchema(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     email: EmailStr
-    password: str = Field(min_length=8, max_length=64)
+    password: str
 
 
 class RegisterResponseSchema(BaseModel):
@@ -27,4 +30,4 @@ class RegisterResponseSchema(BaseModel):
 
 class LoginResponseSchema(BaseModel):
     access_token: str = Field(min_length=1)
-    token_type: Literal["bearer"]
+    token_type: Literal["bearer"] = "bearer"

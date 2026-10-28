@@ -1,8 +1,9 @@
 from httpx import Client
 
+from config import settings
+
 
 def public_client_builder() -> Client:
     return Client(
-        base_url="http://localhost:8000/api",
-        timeout=50
+        base_url=settings.client_settings.url, timeout=settings.client_settings.timeout
     )

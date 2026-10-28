@@ -1,10 +1,10 @@
-from pydantic import ConfigDict
-from datetime import date, time, datetime
-from enum import IntEnum
+from datetime import date, datetime, time
 from typing import Literal
-from src.api.tools.data_generator import fake
 from uuid import UUID
-from pydantic import BaseModel, Field, RootModel
+
+from pydantic import BaseModel, ConfigDict, Field, RootModel
+
+from src.api.tools.data_generator import fake
 
 
 class BaseBookingSchema(BaseModel):
@@ -71,8 +71,10 @@ class CancelBookingResponseSchema(BaseBookingSchema):
     pass
 
 
-class PayBookingRequestSchema(BaseBookingSchema):
-    test_scenario: Literal["success", "failure", "no_response"]
+class PayBookingRequestSchema(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    test_scenario: Literal["success", "failure", "no_response"] | None = None
 
 
 class PayBookingResponseSchema(BaseBookingSchema):

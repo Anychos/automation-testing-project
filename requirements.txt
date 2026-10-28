@@ -2,4 +2,6 @@ Faker
 email-validator
 httpx
 pydantic
+pydantic-settings
 pytest
+tzdata
