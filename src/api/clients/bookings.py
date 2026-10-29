@@ -1,3 +1,4 @@
+from typing import Any
 from uuid import UUID
 
 from httpx import Response
@@ -20,9 +21,13 @@ class BookingsAPIClient(BaseAPIClient):
     def get_booking_api(self, booking_id: UUID) -> Response:
         return self.get(url=f"{Route.BOOKINGS}/{booking_id}")
 
-    def create_booking_api(self, json: CreateBookingRequestSchema) -> Response:
-        request_body = json.model_dump(mode="json")
-        request_body["start_time"] = json.start_time.strftime("%H:%M")
+    def create_booking_api(
+        self, json: CreateBookingRequestSchema | dict[str, Any]
+    ) -> Response:
+        if isinstance(json, CreateBookingRequestSchema):
+            request_body = json.model_dump(mode="json")
+        else:
+            request_body = json
         return self.post(url=Route.BOOKINGS, json=request_body)
 
     def create_booking(
@@ -41,9 +46,14 @@ class BookingsAPIClient(BaseAPIClient):
         return self.post(url=f"{Route.BOOKINGS}/{booking_id}/cancel")
 
     def pay_booking_api(
-        self, booking_id: UUID, json: PayBookingRequestSchema | None = None
+        self,
+        booking_id: UUID,
+        json: PayBookingRequestSchema | dict[str, Any] | None = None,
     ) -> Response:
-        request_body = json.model_dump(mode="json") if json is not None else None
+        if isinstance(json, PayBookingRequestSchema):
+            request_body = json.model_dump(mode="json")
+        else:
+            request_body = json
         return self.post(
             url=f"{Route.BOOKINGS}/{booking_id}/pay",
             json=request_body,

@@ -1,3 +1,4 @@
+from typing import Any
 from uuid import UUID
 
 from httpx import Response
@@ -20,8 +21,14 @@ class RoomsAPIClient(BaseAPIClient):
     def get_room_api(self, room_id: UUID) -> Response:
         return self.get(url=f"{Route.ROOMS}/{room_id}")
 
-    def create_room_api(self, json: CreateRoomRequestSchema) -> Response:
-        return self.post(url=Route.ROOMS, json=json.model_dump(mode="json"))
+    def create_room_api(
+        self, json: CreateRoomRequestSchema | dict[str, Any]
+    ) -> Response:
+        if isinstance(json, CreateRoomRequestSchema):
+            request_body = json.model_dump(mode="json")
+        else:
+            request_body = json
+        return self.post(url=Route.ROOMS, json=request_body)
 
     def create_room(self, json: CreateRoomRequestSchema) -> CreateRoomResponseSchema:
         create_room_response = self.create_room_api(json=json)
@@ -34,10 +41,16 @@ class RoomsAPIClient(BaseAPIClient):
         params = {"include_inactive": include_inactive}
         return self.get(url=Route.ROOMS, params=params)
 
-    def update_room_api(self, room_id: UUID, json: UpdateRoomRequestSchema) -> Response:
+    def update_room_api(
+        self, room_id: UUID, json: UpdateRoomRequestSchema | dict[str, Any]
+    ) -> Response:
+        if isinstance(json, UpdateRoomRequestSchema):
+            request_body = json.model_dump(exclude_unset=True, mode="json")
+        else:
+            request_body = json
         return self.patch(
             url=f"{Route.ROOMS}/{room_id}",
-            json=json.model_dump(exclude_unset=True, mode="json"),
+            json=request_body,
         )
 
     def delete_room_api(self, room_id: UUID) -> Response:

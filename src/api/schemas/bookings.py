@@ -2,7 +2,7 @@ from datetime import date, datetime, time
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, RootModel
+from pydantic import BaseModel, ConfigDict, Field, RootModel, field_serializer
 
 from src.api.tools.data_generator import fake
 
@@ -53,6 +53,10 @@ class CreateBookingRequestSchema(BaseModel):
     )
 
     attendees: int = Field(default=1, ge=1)
+
+    @field_serializer("start_time", when_used="json")
+    def serialize_start_time(self, value: time) -> str:
+        return value.strftime("%H:%M")
 
 
 class CreateBookingResponseSchema(BaseBookingSchema):

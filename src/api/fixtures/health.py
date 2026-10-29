@@ -9,6 +9,8 @@ from src.api.clients.health import HealthAPIClient, get_health_client
 def health_client() -> Iterator[HealthAPIClient]:
     health_client = get_health_client()
 
-    yield health_client
+    try:
+        yield health_client
 
-    health_client.close()
+    finally:
+        health_client.close()

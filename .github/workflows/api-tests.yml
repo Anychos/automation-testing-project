@@ -1,0 +1,63 @@
+name: API tests
+
+on:
+  push:
+
+permissions:
+  contents: read
+
+jobs:
+  api-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out tests
+        uses: actions/checkout@v7
+
+      - name: Check out BookingLab
+        uses: actions/checkout@v7
+        with:
+          repository: Anychos/automation-testing-project-base-app
+          ref: 2cdd40f2eb03ef72cb749cf976357c49cc3b5573
+          path: bookinglab-app
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+
+      - name: Install test dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Configure application and tests
+        shell: bash
+        run: |
+          cp bookinglab-app/.env.example bookinglab-app/.env
+          source bookinglab-app/.env
+          cat > .env <<EOF
+          CLIENT_SETTINGS.BASE_URL=http://127.0.0.1:8000/api
+          CLIENT_SETTINGS.TIMEOUT=10
+          ADMIN_DATA.EMAIL=${SEED_ADMIN_EMAIL}
+          ADMIN_DATA.PASSWORD=${SEED_ADMIN_PASSWORD}
+          USER_DATA_SESSION.EMAIL=${SEED_USER_EMAIL}
+          USER_DATA_SESSION.PASSWORD=${SEED_USER_PASSWORD}
+          EOF
+
+      - name: Start BookingLab
+        working-directory: bookinglab-app
+        run: docker compose up -d --build --wait --wait-timeout 180 backend
+
+      - name: Create initial test data
+        working-directory: bookinglab-app
+        run: docker compose exec -T -e CONFIRM_TEST_DATA_OPERATION=yes backend python -m app.seed seed
+
+      - name: Run API tests
+        run: python -m pytest -q tests/api
+
+      - name: Show application logs on failure
+        if: failure()
+        run: |
+          if [ -f bookinglab-app/.env ]; then
+            docker compose --project-directory bookinglab-app -f bookinglab-app/compose.yaml logs --no-color
+          fi
