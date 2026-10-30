@@ -11,6 +11,8 @@ from src.api.schemas.bookings import (
     CreateBookingRequestSchema,
     CreateBookingResponseSchema,
 )
+from src.api.schemas.users import GetUserMeResponseSchema
+from src.api.tools.routes import Route
 
 
 class BookingFixture(BaseModel):
@@ -31,6 +33,13 @@ def bookings_client(
         yield bookings_client
     finally:
         bookings_client.close()
+
+
+@pytest.fixture(scope="function")
+def booking_user(bookings_client: BookingsAPIClient) -> GetUserMeResponseSchema:
+    user_response = bookings_client.get(url=f"{Route.USERS}/me")
+    user_response.raise_for_status()
+    return GetUserMeResponseSchema.model_validate_json(user_response.content)
 
 
 @pytest.fixture(scope="function")

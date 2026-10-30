@@ -1,14 +1,21 @@
+from http import HTTPStatus
 from uuid import uuid4
 
-from src.api.assertions.base import assert_field_value, assert_status_code
+import pytest
+
+from src.api.assertions.base import assert_status_code
 from src.api.assertions.bookings import (
     assert_booking,
+    assert_cancel_booking_response,
+    assert_create_booking_response,
     assert_get_booking_response,
+    assert_pay_booking_response,
 )
 from src.api.clients.bookings import BookingsAPIClient
 from src.api.fixtures.bookings import BookingFixture
 from src.api.fixtures.rooms import RoomFixture
 from src.api.schemas.bookings import (
+    CancelBookingResponseSchema,
     CreateBookingRequestSchema,
     CreateBookingResponseSchema,
     GetBookingResponseSchema,
@@ -16,29 +23,22 @@ from src.api.schemas.bookings import (
     PayBookingRequestSchema,
     PayBookingResponseSchema,
 )
+from src.api.schemas.users import GetUserMeResponseSchema
 
 
+@pytest.mark.bookings
+@pytest.mark.positive
 class TestBookingsPositive:
+    @pytest.mark.smoke
+    @pytest.mark.regression
     def test_create_booking_returns_201(
         self,
         bookings_client: BookingsAPIClient,
         created_room: RoomFixture,
+        booking_user: GetUserMeResponseSchema,
     ) -> None:
         # Arrange
         create_booking_request = CreateBookingRequestSchema(room_id=created_room.id)
-
-        # Act
-        create_booking_response = bookings_client.create_booking_api(
-            json=create_booking_request
-        )
-
-        # Assert
-        assert_status_code(expected=201, actual=create_booking_response.status_code)
-        create_booking_response_schema = (
-            CreateBookingResponseSchema.model_validate_json(
-                create_booking_response.content
-            )
-        )
         expected_end_minutes = (
             create_booking_request.start_time.hour * 60
             + create_booking_request.start_time.minute
@@ -53,37 +53,32 @@ class TestBookingsPositive:
             * create_booking_request.duration_minutes
             // 30
         )
-        assert_field_value(
-            expected=create_booking_request.room_id,
-            actual=create_booking_response_schema.room_id,
-            field_name="room_id",
-        )
-        assert_field_value(
-            expected=create_booking_request.title,
-            actual=create_booking_response_schema.title,
-            field_name="title",
-        )
-        assert_field_value(
-            expected=create_booking_request.booking_date,
-            actual=create_booking_response_schema.booking_date,
-            field_name="booking_date",
-        )
-        assert_field_value(
-            expected=expected_end_time,
-            actual=create_booking_response_schema.end_time,
-            field_name="end_time",
-        )
-        assert_field_value(
-            expected=expected_total_price,
-            actual=create_booking_response_schema.total_price_kopeks,
-            field_name="total_price_kopeks",
-        )
-        assert_field_value(
-            expected="CREATED",
-            actual=create_booking_response_schema.status,
-            field_name="status",
+
+        # Act
+        create_booking_response = bookings_client.create_booking_api(
+            json=create_booking_request
         )
 
+        # Assert
+        assert_status_code(
+            expected=HTTPStatus.CREATED, actual=create_booking_response.status_code
+        )
+        create_booking_response_schema = (
+            CreateBookingResponseSchema.model_validate_json(
+                create_booking_response.content
+            )
+        )
+        assert_create_booking_response(
+            create_booking_request=create_booking_request,
+            create_booking_response=create_booking_response_schema,
+            expected_user_id=booking_user.id,
+            expected_end_time=expected_end_time,
+            expected_total_price_kopeks=expected_total_price,
+            expected_status="CREATED",
+        )
+
+    @pytest.mark.smoke
+    @pytest.mark.regression
     def test_get_bookings_returns_created_booking(
         self,
         bookings_client: BookingsAPIClient,
@@ -96,7 +91,7 @@ class TestBookingsPositive:
         bookings_response = bookings_client.get_bookings_api()
 
         # Assert
-        assert_status_code(expected=200, actual=bookings_response.status_code)
+        assert_status_code(expected=HTTPStatus.OK, actual=bookings_response.status_code)
         bookings_response_schema = GetBookingsResponseSchema.model_validate_json(
             bookings_response.content
         )
@@ -110,6 +105,8 @@ class TestBookingsPositive:
             actual_booking_schema=actual_booking,
         )
 
+    @pytest.mark.smoke
+    @pytest.mark.regression
     def test_get_existing_booking_returns_200(
         self,
         bookings_client: BookingsAPIClient,
@@ -122,7 +119,9 @@ class TestBookingsPositive:
         get_booking_response = bookings_client.get_booking_api(booking_id=booking_id)
 
         # Assert
-        assert_status_code(expected=200, actual=get_booking_response.status_code)
+        assert_status_code(
+            expected=HTTPStatus.OK, actual=get_booking_response.status_code
+        )
         get_booking_response_schema = GetBookingResponseSchema.model_validate_json(
             get_booking_response.content
         )
@@ -131,6 +130,8 @@ class TestBookingsPositive:
             get_booking_response=get_booking_response_schema,
         )
 
+    @pytest.mark.smoke
+    @pytest.mark.regression
     def test_cancel_existing_booking_returns_200(
         self,
         bookings_client: BookingsAPIClient,
@@ -145,21 +146,23 @@ class TestBookingsPositive:
         )
 
         # Assert
-        assert_status_code(expected=200, actual=cancel_booking_response.status_code)
-        cancel_booking_response_schema = GetBookingResponseSchema.model_validate_json(
-            cancel_booking_response.content
+        assert_status_code(
+            expected=HTTPStatus.OK, actual=cancel_booking_response.status_code
         )
-        assert_field_value(
-            expected=booking_id,
-            actual=cancel_booking_response_schema.id,
-            field_name="id",
+        cancel_booking_response_schema = (
+            CancelBookingResponseSchema.model_validate_json(
+                cancel_booking_response.content
+            )
         )
-        assert_field_value(
-            expected="CANCELLED",
-            actual=cancel_booking_response_schema.status,
-            field_name="status",
+        assert_cancel_booking_response(
+            cancel_booking_response=cancel_booking_response_schema,
+            expected_booking_id=booking_id,
+            expected_status="CANCELLED",
         )
 
+    @pytest.mark.payments
+    @pytest.mark.smoke
+    @pytest.mark.regression
     def test_pay_existing_booking_returns_202(
         self,
         bookings_client: BookingsAPIClient,
@@ -176,21 +179,23 @@ class TestBookingsPositive:
         )
 
         # Assert
-        assert_status_code(expected=202, actual=pay_booking_response.status_code)
+        assert_status_code(
+            expected=HTTPStatus.ACCEPTED, actual=pay_booking_response.status_code
+        )
         pay_booking_response_schema = PayBookingResponseSchema.model_validate_json(
             pay_booking_response.content
         )
-        assert_field_value(
-            expected=booking_id,
-            actual=pay_booking_response_schema.id,
-            field_name="id",
-        )
-        assert pay_booking_response_schema.status, (
-            "Статус бронирования не должен быть пустым"
+        assert_pay_booking_response(
+            pay_booking_response=pay_booking_response_schema,
+            expected_booking_id=booking_id,
+            expected_status="PAYMENT_PENDING",
         )
 
 
+@pytest.mark.bookings
+@pytest.mark.negative
 class TestBookingsNegative:
+    @pytest.mark.regression
     def test_create_booking_for_unknown_room_returns_404(
         self, bookings_client: BookingsAPIClient
     ) -> None:
@@ -203,8 +208,11 @@ class TestBookingsNegative:
         )
 
         # Assert
-        assert_status_code(expected=404, actual=create_booking_response.status_code)
+        assert_status_code(
+            expected=HTTPStatus.NOT_FOUND, actual=create_booking_response.status_code
+        )
 
+    @pytest.mark.regression
     def test_get_unknown_booking_returns_404(
         self, bookings_client: BookingsAPIClient
     ) -> None:
@@ -217,8 +225,11 @@ class TestBookingsNegative:
         )
 
         # Assert
-        assert_status_code(expected=404, actual=get_booking_response.status_code)
+        assert_status_code(
+            expected=HTTPStatus.NOT_FOUND, actual=get_booking_response.status_code
+        )
 
+    @pytest.mark.regression
     def test_cancel_unknown_booking_returns_404(
         self, bookings_client: BookingsAPIClient
     ) -> None:
@@ -231,4 +242,6 @@ class TestBookingsNegative:
         )
 
         # Assert
-        assert_status_code(expected=404, actual=cancel_booking_response.status_code)
+        assert_status_code(
+            expected=HTTPStatus.NOT_FOUND, actual=cancel_booking_response.status_code
+        )

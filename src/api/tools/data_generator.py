@@ -1,4 +1,5 @@
 from datetime import date, datetime, time, timedelta
+from uuid import uuid4
 from zoneinfo import ZoneInfo
 
 from faker import Faker
@@ -16,7 +17,7 @@ class DataGenerator:
         return self.faker.password()
 
     def room_name(self) -> str:
-        return "Автотест комната " + str(self.faker.random_int())
+        return f"Автотест комната {uuid4().hex}"
 
     def room_capacity(self) -> int:
         return self.faker.random_int(min=2, max=10)

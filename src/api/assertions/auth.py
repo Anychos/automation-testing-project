@@ -21,7 +21,7 @@ def assert_register_response(
     register_response: RegisterResponseSchema,
 ) -> None:
     assert_field_value(
-        expected=register_request.email,
+        expected=register_request.email.lower(),
         actual=register_response.email,
         field_name="email",
     )

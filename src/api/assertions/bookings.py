@@ -4,9 +4,11 @@ from uuid import UUID
 from src.api.assertions.base import assert_field_value
 from src.api.schemas.bookings import (
     BaseBookingSchema,
+    CancelBookingResponseSchema,
     CreateBookingRequestSchema,
     CreateBookingResponseSchema,
     GetBookingResponseSchema,
+    PayBookingResponseSchema,
 )
 
 
@@ -92,6 +94,7 @@ def assert_create_booking_response(
     expected_user_id: UUID,
     expected_end_time: time,
     expected_total_price_kopeks: int,
+    expected_status: str,
 ) -> None:
     assert_field_value(
         expected=create_booking_request.room_id,
@@ -137,6 +140,47 @@ def assert_create_booking_response(
         expected=expected_total_price_kopeks,
         actual=create_booking_response.total_price_kopeks,
         field_name="total_price_kopeks",
+    )
+    assert_field_value(
+        expected=expected_status,
+        actual=create_booking_response.status,
+        field_name="status",
+    )
+
+
+def assert_cancel_booking_response(
+    *,
+    cancel_booking_response: CancelBookingResponseSchema,
+    expected_booking_id: UUID,
+    expected_status: str,
+) -> None:
+    assert_field_value(
+        expected=expected_booking_id,
+        actual=cancel_booking_response.id,
+        field_name="id",
+    )
+    assert_field_value(
+        expected=expected_status,
+        actual=cancel_booking_response.status,
+        field_name="status",
+    )
+
+
+def assert_pay_booking_response(
+    *,
+    pay_booking_response: PayBookingResponseSchema,
+    expected_booking_id: UUID,
+    expected_status: str,
+) -> None:
+    assert_field_value(
+        expected=expected_booking_id,
+        actual=pay_booking_response.id,
+        field_name="id",
+    )
+    assert_field_value(
+        expected=expected_status,
+        actual=pay_booking_response.status,
+        field_name="status",
     )
 
 
